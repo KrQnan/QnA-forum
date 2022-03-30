@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QnAForums - category</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" crossorigin="anonymous" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+    <script src="http://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js" integrity="sha384-q2kxQ16AaE6UbzuKqyBE9/u/KzioAlnx2maXQHiDX9d4/zp8Ok3f+M7DPm+Ib6IU" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.min.js" integrity="sha384-pQQkAEnwaBkjpqZ8RU1fF1AKtTcHJwFl3pblpTlHXybJjHpMYo79HY3hIi4NKxyj" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div id="category">
+        <header>
+        <!--Start Navbar-->
+        <nav class="navbar navbar-expand-lg navbar-light bg-success">
+            <div class="container-fluid">
+            <a class="navbar-brand text-light" href="/"><i class="fa fa-home"></i></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link active text-light" aria-current="page" href="/">Home</a>
+                </li>
+                <!--Start Dropdown-->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle text-light" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Categories</a>
+                    <ul class="dropdown-menu">
+                      <li v-for="category in categories"><a class="dropdown-item" :href="'/category/'+ category.categoryId" v-bind:key="category.categoryId">{{ category.categoryTitle }}</a></li>
+                    </ul>
+                </li>
+                <!--End Dropdown-->
+                </ul>
+                <!--Login-->
+                <button v-if="myuser.userId == null" type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#loginModal">
+                    Login
+                </button>
+                <!--Logout-->
+                <div v-else class="d-flex ">
+                    <a type="button" href="/user" class="btn btn-light border-dark mx-4">{{ myuser.username }}<i class="fas fa-user mx-2"></i></a>
+                    <button  type="button" class="btn btn-warning"  @click="logout()">Logout</button>
+                </div>
+            </div>
+            </div>
+        </nav>
+        <!--End Navbar-->
+        </header>
+    <main>
+      
+        <div class="container row row-cols-1 row-cols-md-1 mx-auto g-4 mt-3 border-dark">
+            <h1 class="text-center">{{ category.categoryTitle }}</h1>
+            <h3 v-if="faqQuestions.length > 0" class="text-center">FAQ</h3>
+        </div>
+        <div class="container row row-cols-1 row-cols-md-2 mx-auto g-4 mt-3" id="forumStart" style="justify-content: center;">
+            <!--Start Card-->
+            <div class="card border-dark col mx-4 p-0" v-if="question.questionId != null" v-for="question in faqQuestions" v-bind:key="question.questionId" style="width: 18rem;">
+                <!--Start Card Body-->
+                <div class="card-body bg-success d-flex flex-column">
+                    <!--Card Title-->
+                    <h5 class="card-title text-light">{{ question.questionTitle}}</h5>
+                    <!--Card Text-->
+                    <!--<p class="card-text text-light">{{ question.questionText }}</p>-->
+                    <a type="button" :href="'/question/'+ question.questionId" class="btn btn-warning border-dark">Go to question</a>
+                </div>
+                <!--End Card Body-->
+                <!--Start Card Footer-->
+                <div class="card-footer border-dark bg-muted">
+                    <small class="text-muted" v-if="question.dublicateId == null">{{ question.timeStamp }} </small>
+                    <small class="text-danger" v-if="question.duplicateId != null"> Duplicate</small>   
+                </div>
+                <!--End Card Footer-->
+            </div>
+            
+            <!--End Card-->
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-1 mx-auto g-4 mt-3">
+            <h2 v-if="questions.length > 0" class="text-center">Questions</h2>
+        </div>
+        <div class="container row row-cols-1 row-cols-md-2 mx-auto g-4 mt-3" style="justify-content: center;">
+            <!--Start Card-->
+            <div class="card border-dark col mx-4 p-0" v-if="question.questionId != null" v-for="question in questions" v-bind:key="question.questionId" style="width: 18rem;">
+                <!--Start Card Body-->
+                <div class="card-body bg-success d-flex flex-column">
+                    <!--Card Title-->
+                    <h5 class="card-title text-light">{{ question.questionTitle}}</h5>
+                    <!--Card Text-->
+                    <!--<p class="card-text text-light">{{ question.questionText }}</p>-->
+                    <a type="button" :href="'/question/'+ question.questionId" class="btn btn-warning border-dark">Go to question</a>
+                </div>
+                <!--End Card Body-->
+                <!--Start Card Footer-->
+                <div class="card-footer border-dark bg-muted">
+                    <small class="text-muted" v-if="question.dublicateId == null">{{ question.timeStamp }} </small>
+                    <small class="text-danger" v-if="question.duplicateId != null"> Duplicate</small>   
+                </div>
+                <!--End Card Footer-->
+            </div>
+            <div v-else>
+                <h3 class="text-center">No Question in this category yet</h3>
+            </div>
+            <!--End Card-->
+        </div>
+
+
+        <!-- Start loginModal -->
+      <div class="modal fade" id="loginModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title" id="staticBackdropLabel">Login</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="formControlInput1" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="loginUsername" placeholder="Please enter valid username">
+                  </div>
+                  <div class="mb-3">
+                    <label for="formControlInput2" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="loginPassword" placeholder="Please enter valid password">
+                  </div>
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-success" data-bs-dismiss="modal" @click="login()">Login</button>
+            </div>
+        </div>
+        </div>
+    </div>
+    <!-- End loginModal -->
+
+        <!--End Card Container-->
+        <footer class="page-footer font-small mt-3">
+            <div style="background-color:#292b2c  ;">
+              <div class="container">
+                <div class="row py-4 d-flex align-items-center">
+                  <div class="col-md-6 col-lg-5 text-center text-md-left mb-4 mb-md-0">
+                    <h6 class="mb-0 text-light">Get connected with us on social networks!</h6>
+                  </div>
+                  <div class="col-md-6 col-lg-7 text-center text-md-right">
+                    <a href="https://www.facebook.com/" class="fb-ic">
+                      <i class="fab fa-facebook-f text-light mr-4"> </i>
+                    </a>
+                    <a href="https://mobile.twitter.com/login?lang=sv" class="tw-ic">
+                      <i class="fab fa-twitter text-light mr-4"> </i>
+                    </a>
+                    <a href="https://www.google.se/" class="gplus-ic">
+                      <i class="fab fa-google-plus-g text-light mr-4"> </i>
+                    </a>
+                    <a href="https://www.instagram.com/" class="ins-ic">
+                      <i class="fab fa-instagram text-light"> </i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="container text-center text-md-left mt-5">
+              <div class="row mt-3">
+                <div class="col-md-3 col-lg-4 col-xl-3 mx-auto mb-4">
+                  <h6 class="text-uppercase font-weight-bold">QnAForums</h6>
+                  <hr class="deep-purple accent-2 mb-4 mt-0 d-inline-block mx-auto" style="width: 60px;">
+                  <p>QnAForums is almost better then stackOverflow
+                  </p>
+                </div>
+                <div class="col-md-2 col-lg-2 col-xl-2 mx-auto mb-4">
+                  <h6 class="text-uppercase font-weight-bold">Refrence links</h6>
+                  <hr class="deep-purple accent-2 mb-4 mt-0 d-inline-block mx-auto" style="width: 60px;">
+                  <p>
+                    <a href="https://mdbootstrap.com/">MDBootstrap</a>
+                  </p>
+                  <p>
+                    <a href="https://getbootstrap.com/">Bootstrap</a>
+                  </p>
+                </div>
+                <div class="col-md-3 col-lg-2 col-xl-2 mx-auto mb-4">
+                  <h6 class="text-uppercase font-weight-bold">Info</h6>
+                  <hr class="deep-purple accent-2 mb-4 mt-0 d-inline-block mx-auto" style="width: 60px;">
+                  <p>
+                    Maybe all you will ever need!
+                  </p>
+                  <p>
+                    <a href="#!">Help</a>
+                  </p>
+                </div>
+                <div class="col-md-4 col-lg-3 col-xl-3 mx-auto mb-md-0 mb-4">
+                  <h6 class="text-uppercase font-weight-bold">Contact</h6>
+                  <hr class="deep-purple accent-2 mb-4 mt-0 d-inline-block mx-auto" style="width: 60px;">
+                  <p>
+                    <i class="fas fa-home mr-3"></i> GULLHOLMEN, Villagatan 48 440 84
+                  </p>
+                  <p>
+                    <i class="fas fa-envelope mr-3"></i> QnaForums@yahoo.com
+                  </p>
+                  <p>
+                    <i class="fas fa-phone mr-3"></i> 0304-7402686
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="footer-copyright text-center py-3">© 2020 Copyright:
+              <a href="https://mdbootstrap.com/"> MDBootstrap.com</a>
+            </div>
+          </footer>
+    </main>
+    </div>
+</body>
+<script>
+    //Creating our new Vue instance
+    const v = new Vue({
+        el: '#category',
+        data: {
+            categories: [],
+            category: {},
+            faqQuestions: [],
+            questions:[],
+            myuser: {},
+        },
+        //Defining methods
+        methods:{
+            init(){
+              var self = this;
+              $.ajax({
+                  url: '/api/myuser',
+                  type: 'GET',
+                  xhrFields: {withCredentials: true},
+                  contentType: "application/json; charset=utf-8",
+                  success(res){
+                      if(res.userId){
+                          self.myuser=res;
+                      }
+                  }
+              });
+              const url = window.location.href.split('/');
+              const id = url[url.length -1];
+              $.getJSON('/api/category/' + id, function(res){
+                  if(!res.error){
+                      self.category = res[0];
+                  }
+              })
+              //Gets our questions for the FAQ
+              $.getJSON('/api/questions/category/' + id + '/faq', function(res){
+                  self.faqQuestions = res;
+              });
+              //Gets our questions for the ordinary questions
+              $.getJSON('/api/questions/category/' + id, function(res){
+                if(!res.error){     
+                    self.questions = res;
+                  }
+                  else{
+                      alert(res.error);
+                  }
+              });
+              //Gets our categories
+              $.getJSON("/api/category", function(res) {
+                  if(!res.error){     
+                    self.categories = res;
+                  }
+                  else{
+                      alert(res.error);
+                  }
+              });
+            },
+            //Login method
+            login(){
+                var self = this;
+                var user = {
+                    username: $('#loginUsername').val(),
+                    password: $('#loginPassword').val()
+                }
+                //Ajax call for the users username and password
+                $.ajax({
+                    url: '/api/login',
+                    type: 'POST',
+                    data: JSON.stringify(user),
+                    contentType: "application/json; charset=utf-8",
+                    xhrFields: {withCredentials: true},
+                    dataType   : "json",
+                    success(res){
+                        if(res.userId){
+                            self.myuser = res;
+                            self.init();
+                        }  
+                        else{
+                            alert(res.error);
+                        }
+                    },
+                    error(error){
+                        console.log(error);
+                    }
+                })
+            },
+            //logout method
+            logout(){
+                var self = this;
+                $.ajax({
+                    url: '/api/logout',
+                    type: 'POST',
+                    xhrFields: {withCredentials: true},
+                    success(message){
+                        self.myuser = {}
+                        self.init();
+                    },
+                    error(error){
+                        console.log(error);
+                    }
+                })
+            },
+        },
+        mounted(){
+            this.init();
+        }
+    });
+</script>
+
+</html>

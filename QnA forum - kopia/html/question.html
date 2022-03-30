@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QnaForums - Question</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" crossorigin="anonymous" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+    <script src="http://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.min.js" integrity="sha384-pQQkAEnwaBkjpqZ8RU1fF1AKtTcHJwFl3pblpTlHXybJjHpMYo79HY3hIi4NKxyj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js" integrity="sha384-q2kxQ16AaE6UbzuKqyBE9/u/KzioAlnx2maXQHiDX9d4/zp8Ok3f+M7DPm+Ib6IU" crossorigin="anonymous"></script>
+    
+</head>
+<body>
+<div id="questionSite">
+    <header>
+    <!--Start Navbar-->
+    <nav class="navbar navbar-expand-lg navbar-light bg-success">
+        <div class="container-fluid">
+        <a class="navbar-brand text-light" href="/"><i class="fa fa-home"></i></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+                <a class="nav-link active text-light" aria-current="page" href="/">Home</a>
+            </li>
+            <!--Start Dropdown-->
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle text-light" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Categories</a>
+                <ul class="dropdown-menu">
+                  <li v-for="category in categories"><a class="dropdown-item" :href="'/category/'+ category.categoryId" v-bind:key="category.categoryId">{{ category.categoryTitle }}</a></li>
+                </ul>
+            </li>
+            <!--End Dropdown-->
+            </ul>
+            <!--Login-->
+            <button v-if="myuser.userId == null" type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#loginModal">
+                Login
+            </button>
+            <!--Logout-->
+            <div v-else class="d-flex ">
+                <a type="button" href="/user" class="btn btn-light border-dark mx-4">{{ myuser.username }}<i class="fas fa-user mx-2"></i></a>
+                <button  type="button" class="btn btn-warning"  @click="logout()">Logout</button>
+            </div>
+        </div>
+        </div>
+    </nav>
+    </header>
+    <main>
+        <!-- Question Start-->
+            <div v-if="question.questionId != null" class="container row row-cols-1 row-cols-md-1 mx-auto g-4 mt-3" style="justify-content: center;">
+                <div v-if="question.duplicateId != null">
+                    <h1 class="text-danger">This question is a duplicate</h1>
+                    <a :href="'/question/' + question.duplicateId">Go to original</a>
+                </div>
+                <div  class="card border-dark">
+                    <div class="card-body col">
+                        <h2 class="card-title">{{ question.questionTitle }}</h2>
+                        <p class="card-text">{{ question.questionText }}</p>
+                        <p class="card-text">{{ question.username }}</p>
+                        <button v-if="question.authorId == myuser.userId" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editQuestionModal" @click="editQuestion()">Edit</button>
+                        <button v-if="myuser.privilegeId < 3" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#duplicateModal">Mark as duplicate</button>
+                    </div>
+                    <div class="card-footer border-dark bg-success text-center">
+                        <small class="text-light" v-if="question.dublicateId == null">Posted {{ question.timeStamp }} in {{ question.categoryName }}</small> 
+                    </div>
+                </div>
+                <div v-if="myuser.privilegeId == 2">
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addAnswerModal">Add your answer</button>
+                </div>
+                <div class="card border-dark mx-4 p-0" v-for="answer in answers">
+                    <div v-if="answer.answerId">
+                        <div class="card border-dark col p-0">
+                            <div class="card-body row row-cols-1 row-cols-md-2">
+                                <div class="d-flex flex-column">
+                                    <h5>{{ answer.answerTitle }}</h5>
+                                    <p>{{ answer.answerText }}</p>
+                                    <p class="text-muted">{{ answer.username }}</p> 
+                                </div>
+                                <div class="d-flex flex-column mx-auto" v-if="question.authorId == myuser.userId">
+                                    <button type="button" class="btn btn-success w-25 mx-auto" @click="upvote(answer.answerId)"><i class="fa fa-sort-up mx-auto"></i></button>
+                                    <p class="text-center pt-2">Score: {{ answer.score }}</p>
+                                    <button type="button" class="btn btn-danger w-25 mx-auto" @click="downvote(answer.answerId)"><i class="fa fa-sort-down mx-auto"></i></button>
+                                </div>
+                                <div v-else-if="myuser.privilegeId == 1">
+                                    <p>Score: {{ answer.score }}</p>
+                                </div>
+                                <div v-if="myuser.userId == answer.authorId">
+                                    <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#editAnswerModal" @click="editAnswer(answer.answerId)">Edit</button>
+                                </div>
+                            </div>
+                            <div class="card-footer border-dark bg-success text-center">
+                                <small class="text-light" v-if="question.dublicateId == null">{{ answer.timeStamp }} </small> 
+                            </div>
+                            
+                        </div>
+                    </div> 
+                    <div v-else>
+                        <h2>No answers yet</h2>
+                    </div>
+                </div>
+            </div>
+            <div v-else>
+                <h2>404: Question not found</h2>
+            </div>
+        <!--Question end-->
+        <!--Footer start-->
+        <footer class="page-footer font-small mt-3">
+            <div style="background-color:#292b2c  ;">
+              <div class="container">
+                <div class="row py-4 d-flex align-items-center">
+                  <div class="col-md-6 col-lg-5 text-center text-md-left mb-4 mb-md-0">
+                    <h6 class="mb-0 text-light">Get connected with us on social networks!</h6>
+                  </div>
+                  <div class="col-md-6 col-lg-7 text-center text-md-right">
+                    <a href="https://www.facebook.com/" class="fb-ic">
+                      <i class="fab fa-facebook-f text-light mr-4"> </i>
+                    </a>
+                    <a href="https://mobile.twitter.com/login?lang=sv" class="tw-ic">
+                      <i class="fab fa-twitter text-light mr-4"> </i>
+                    </a>
+                    <a href="https://www.google.se/" class="gplus-ic">
+                      <i class="fab fa-google-plus-g text-light mr-4"> </i>
+                    </a>
+                    <a href="https://www.instagram.com/" class="ins-ic">
+                      <i class="fab fa-instagram text-light"> </i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="container text-center text-md-left mt-5">
+              <div class="row mt-3">
+                <div class="col-md-3 col-lg-4 col-xl-3 mx-auto mb-4">
+                  <h6 class="text-uppercase font-weight-bold">QnAForums</h6>
+                  <hr class="deep-purple accent-2 mb-4 mt-0 d-inline-block mx-auto" style="width: 60px;">
+                  <p>QnAForums is almost better then stackOverflow
+                  </p>
+                </div>
+                <div class="col-md-2 col-lg-2 col-xl-2 mx-auto mb-4">
+                  <h6 class="text-uppercase font-weight-bold">Refrence links</h6>
+                  <hr class="deep-purple accent-2 mb-4 mt-0 d-inline-block mx-auto" style="width: 60px;">
+                  <p>
+                    <a href="https://mdbootstrap.com/">MDBootstrap</a>
+                  </p>
+                  <p>
+                    <a href="https://getbootstrap.com/">Bootstrap</a>
+                  </p>
+                </div>
+                <div class="col-md-3 col-lg-2 col-xl-2 mx-auto mb-4">
+                  <h6 class="text-uppercase font-weight-bold">Info</h6>
+                  <hr class="deep-purple accent-2 mb-4 mt-0 d-inline-block mx-auto" style="width: 60px;">
+                  <p>
+                    Maybe all you will ever need!
+                  </p>
+                  <p>
+                    <a href="#!">Help</a>
+                  </p>
+                </div>
+                <div class="col-md-4 col-lg-3 col-xl-3 mx-auto mb-md-0 mb-4">
+                  <h6 class="text-uppercase font-weight-bold">Contact</h6>
+                  <hr class="deep-purple accent-2 mb-4 mt-0 d-inline-block mx-auto" style="width: 60px;">
+                  <p>
+                    <i class="fas fa-home mr-3"></i> GULLHOLMEN, Villagatan 48 440 84
+                  </p>
+                  <p>
+                    <i class="fas fa-envelope mr-3"></i> QnaForums@yahoo.com
+                  </p>
+                  <p>
+                    <i class="fas fa-phone mr-3"></i> 0304-7402686
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="footer-copyright text-center py-3">© 2020 Copyright:
+              <a href="https://mdbootstrap.com/"> MDBootstrap.com</a>
+            </div>
+          </footer>
+          <!--Footer End-->
+        <!-- Start loginModal -->
+        <div class="modal fade" id="loginModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                    <h5 class="modal-title" id="staticBackdropLabel">Login</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="formControlInput1" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="loginUsername" placeholder="Please enter valid username">
+                        </div>
+                        <div class="mb-3">
+                            <label for="formControlInput2" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="loginPassword" placeholder="Please enter valid password">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" data-bs-dismiss="modal" @click="login()">Login</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End loginModal --> 
+
+        <!-- Start Edit Question Modal -->
+        <div class="modal fade" id="editQuestionModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                    <h5 class="modal-title" id="editQuestionModalTitle">Edit Question</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="Question Title" class="form-label">Question Title</label>
+                            <input type="text" class="form-control" id="editQuestionTitle">
+                        </div>
+                        <div class="mb-3">
+                            <label for="formControlInput2" class="form-label">Question Text</label>
+                            <textarea type="text" class="form-control" id="editQuestionText" rows="9"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal" @click="deleteQuestion()">Delete</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-success" data-bs-dismiss="modal" @click="saveQuestion()">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Edit Question Modal -->
+
+        <!-- Start add Answer Modal -->
+        <div class="modal fade" id="addAnswerModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                    <h5 class="modal-title" id="addAnswerModalTitle">Edit Question</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="Question Title" class="form-label">Question Title</label>
+                            <input type="text" class="form-control" id="addAnswerTitle">
+                        </div>
+                        <div class="mb-3">
+                            <label for="formControlInput2" class="form-label">Question Text</label>
+                            <textarea type="text" class="form-control" id="addAnswerText" rows="9"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-success" data-bs-dismiss="modal" @click="postAnswer()">Post answer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Edit Answer Modal -->
+
+         <!-- Start Edit Answer Modal -->
+         <div class="modal fade" id="editAnswerModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                    <h5 class="modal-title" id="editAnswerModalTitle">Edit Answer</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="Answer Title" class="form-label">Answer Title</label>
+                            <input id="editAnswerId" hidden>
+                            <input type="text" class="form-control" id="editAnswerTitle">
+                        </div>
+                        <div class="mb-3">
+                            <label for="formControlInput2" class="form-label">Answer Text</label>
+                            <textarea type="text" class="form-control" id="editAnswerText" rows="9"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal" @click="deleteAnswer()">Delete</button>
+                        <button type="button" class="btn btn-success" data-bs-dismiss="modal" @click="saveAnswer()">Post answer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Edit Answer Modal -->
+
+        <!-- Start duplicateModal -->
+        <div class="modal fade" id="duplicateModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                    <h5 class="modal-title" id="duplicateModalTitle">Mark as duplicate</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="Id" class="form-label">Id of original</label>
+                            <input type="text" class="form-control" id="editDuplicateId" placeholder="Insert the Id of the original question">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" data-bs-dismiss="modal" @click="saveDuplicate">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End duplicate Modal --> 
+
+    </main>
+</div>
+</body>
+<script>
+    const v = new Vue({
+        el: '#questionSite',
+        data: {
+            categories: [],
+            question: {},
+            answers: [],
+            myuser: {},
+        },
+        methods:{
+            init(){
+                //Calling for the logged in user
+                let self = this;
+                $.ajax({
+                    url: '/api/myuser',
+                    type: 'GET',
+                    xhrFields: {withCredentials: true},
+                    contentType: "application/json; charset=utf-8",
+                    success(res){
+                        if(res.userId){
+                            self.myuser=res;
+                        }
+                    }
+                });
+                
+                const url = window.location.href.split('/');
+                const id = url[url.length -1];
+                //Gets our answers
+                $.getJSON('/api/answers/' + id, function(res){
+                    if(!res.error){
+                        self.answers = res;
+                    }
+                });
+                //Gets our categories
+                $.getJSON("/api/category", function(result) {
+                    if(!result.error){     
+                        self.categories = result;
+                        $.getJSON('/api/questions/' + id, function(res){
+                            if(!res.error){
+                                self.question = res[0];
+                                for(var i = 0; i < self.categories.length; i++){
+                                    if(self.question.categoryId == self.categories[i].categoryId){
+                                        self.question.categoryName = self.categories[i].categoryTitle;
+                                    }
+                                }
+                            }
+                            else{
+                                alert(result.error);
+                            }
+                        });
+                        
+                    }
+                    else{
+                        alert(res.error);
+                    }
+                });
+            },
+            //Login method 
+            login(){
+                var self = this;
+                var user = {
+                    username: $('#loginUsername').val(),
+                    password: $('#loginPassword').val()
+                }
+                //Getting the users username and password
+                $.ajax({
+                    url: '/api/login',
+                    type: 'POST',
+                    data: JSON.stringify(user),
+                    contentType: "application/json; charset=utf-8",
+                    xhrFields: {withCredentials: true},
+                    dataType   : "json",
+                    success(res){
+                        if(res.userId){
+                            self.myuser = res;
+                            self.init();
+                        }  
+                        else{
+                            alert(res.error);
+                        }
+                    },
+                    error(error){
+                        console.log(error);
+                    }
+                });
+            },
+            //logout user
+            logout(){
+                var self = this;
+                $.ajax({
+                    //Logout our user
+                    url: '/api/logout',
+                    type: 'POST',
+                    xhrFields: {withCredentials: true},
+                    success(message){
+                        self.myuser = {}
+                        self.init();
+                    },
+                    error(error){
+                        console.log(error);
+                    }
+                })
+            },
+            //Upvote method
+            upvote(id){
+                var self = this;
+                $.ajax({
+                    //Getting both answer and upvote
+                    url: '/api/answers/' + id + '/upvote',
+                    type: 'PUT',
+                    xhrFields: {withCredentials: true},
+                    success(message){
+                        $.getJSON('/api/answers/' + self.question.questionId, function(answers){
+                            if(!answers.message){
+                                self.answers = answers;
+                            }
+                            else{
+                                alert(res.error);
+                            }
+                        });
+                    },
+                    error(error){
+                        console.log(error);
+                    }
+                })
+            },
+            //Downvote function
+            downvote(id){
+                var self = this;
+                $.ajax({
+                    //Gets our answer and downvote
+                    url: '/api/answers/' + id + '/downvote',
+                    type: 'PUT',
+                    xhrFields: {withCredentials: true},
+                    success(message){
+                        $.getJSON('/api/answers/' + self.question.questionId, function(res){
+                            if(!res.message){
+                                self.answers = res;
+                            }
+                            else{
+                                alert(res.error);
+                            }
+                        });
+                    },
+                    error(error){
+                        console.log(error);
+                    }
+                });
+            },
+            //Edit the question
+            editQuestion(){
+                $('#editQuestionTitle').val(this.question.questionTitle);
+                $('#editQuestionText').val(this.question.questionText);
+            },
+            //Save question
+            saveQuestion(){
+                const self = this;
+                const question = {
+                    questionTitle: $('#editQuestionTitle').val(),
+                    questionText: $('#editQuestionText').val(),
+                }
+
+                $.ajax({
+                    url: '/api/questions/edit/' + self.question.questionId,
+                    type: 'PUT',
+                    data: JSON.stringify(question),
+                    contentType: "application/json; charset=utf-8",
+                    xhrFields: {withCredentials: true},
+                    dataType   : "json",
+                    success(message){
+                        $.getJSON('/api/questions/' + self.question.questionId, function(res){
+                            if(!res.message){
+                                self.question = res[0];
+                            }
+                            else{
+                                alert(res.error);
+                            }
+                        });
+                    },
+                    error(error){
+                        console.log(error);
+                    }
+                });
+
+            },
+            //delete question
+            deleteQuestion(){
+                const self = this;
+                $.ajax({
+                    url: '/api/questions/delete/' + self.question.questionId,
+                    type: 'DELETE',
+                    xhrFields: {withCredentials: true},
+                    success(message){
+                        window.location.replace('/');
+                    },
+                    error(error){
+                        console.log(error);
+                    }
+                });
+            },
+            //post answer
+            postAnswer(){
+                const self = this;
+                const answer = {
+                    authorId: self.myuser.userId,
+                    answerTitle: $('#addAnswerTitle').val(),
+                    answerText: $('#addAnswerText').val(),
+                }
+
+                $.ajax({
+                    url: '/api/answers/post/' + self.question.questionId,
+                    type: 'POST',
+                    data: JSON.stringify(answer),
+                    contentType: "application/json; charset=utf-8",
+                    xhrFields: {withCredentials: true},
+                    dataType   : "json",
+                    success(message){
+                        console.log(message);
+                        $.getJSON('/api/answers/' + self.question.questionId, function(res){
+                            
+                            if(!res.error){
+                                self.answers = res;
+                            }
+                        });
+                    },
+                    error(error){
+                        console.log(error);
+                    }
+                });
+            },
+            //Edit answer
+            editAnswer(id){
+                const self = this;
+                var answer = {}
+                for(var i = 0; i < self.answers.length; i++){
+                    if(self.answers[i].answerId == id){
+                        answer = self.answers[i];
+                    }
+                }
+                $('#editAnswerId').val(answer.answerId);
+                $('#editAnswerTitle').val(answer.answerTitle);
+                $('#editAnswerText').val(answer.answerText);
+            },
+            //Save answer
+            saveAnswer(){
+                const self = this;
+                const answer = {
+                    answerId: $('#editAnswerId').val(),
+                    answerTitle: $('#editAnswerTitle').val(),
+                    answerText: $('#editAnswerText').val(),
+                };
+
+                $.ajax({
+                    url: '/api/answers/edit/' + answer.answerId,
+                    type: 'PUT',
+                    data: JSON.stringify(answer),
+                    contentType: "application/json; charset=utf-8",
+                    xhrFields: {withCredentials: true},
+                    dataType   : "json",
+                    success(message){
+                        $.getJSON('/api/answers/' + self.question.questionId, function(res){
+                            if(!res.error){
+                                self.answers = res;
+                            }
+                            else{
+                                alert(res.error);
+                            }
+                        });
+                        if(message.error) {alert(message.error)}
+                        else{alert(message.message)}
+                    },
+                    error(error){
+                        console.log(error);
+                    }
+                });
+            }, 
+            //delete answer
+            deleteAnswer(){
+                const self = this;
+                const id = $('#editAnswerId').val();
+                $.ajax({
+                    url: '/api/answers/delete/' + id,
+                    type: 'DELETE',
+                    xhrFields: {withCredentials: true},
+                    success(message){
+                        if(!message.error){
+                            self.init()
+                        }
+                        else{
+                            alert(message.error);
+                        }
+                    },
+                    error(error){
+                        console.log(error);
+                    }
+                });
+            },
+            //Save duplicate
+            saveDuplicate(){
+                const self = this;
+                var question = {
+                    duplicateId: $('#editDuplicateId').val(),
+                }
+                if(question.duplicateId === ''){
+                    question.duplicateId = null;
+                }
+                $.ajax({
+                    url: '/api/questions/duplicate/' + self.question.questionId,
+                    type: 'PUT',
+                    data: JSON.stringify(question),
+                    contentType: "application/json; charset=utf-8",
+                    xhrFields: {withCredentials: true},
+                    dataType   : "json",
+                    success(message){
+                        $.getJSON('/api/questions/' + self.question.questionId, function(res){
+                            if(!res.error){
+                                self.question = res[0];
+                            }
+                            else{
+                                alert(res.error);
+                            }
+                        });
+                    },
+                    error(error){
+                        console.log(error);
+                    }
+                });
+
+            }
+        },
+        mounted(){
+            this.init();
+        }
+    });
+</script>
+</html>

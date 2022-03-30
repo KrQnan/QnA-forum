@@ -1,0 +1,378 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QnaForums - User</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" crossorigin="anonymous" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+    <script src="http://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js" integrity="sha384-q2kxQ16AaE6UbzuKqyBE9/u/KzioAlnx2maXQHiDX9d4/zp8Ok3f+M7DPm+Ib6IU" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.min.js" integrity="sha384-pQQkAEnwaBkjpqZ8RU1fF1AKtTcHJwFl3pblpTlHXybJjHpMYo79HY3hIi4NKxyj" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="userProfile">
+    <header>
+    <!--Start Navbar-->
+        <nav class="navbar navbar-expand-lg navbar-light bg-success">
+            <div class="container-fluid">
+            <a class="navbar-brand text-light" href="/"><i class="fa fa-home"></i></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link active text-light" aria-current="page" href="/">Home</a>
+                </li>
+                <!--Start Dropdown-->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle text-light" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Categories</a>
+                    <ul class="dropdown-menu">
+                    <li v-for="category in categories"><a class="dropdown-item" :href="'/category/'+ category.categoryId" v-bind:key="category.categoryId">{{ category.categoryTitle }}</a></li>
+                    </ul>
+                </li>
+                <!--End Dropdown-->
+                </ul>
+                <!--Login-->
+                <button v-if="myuser.userId == null" type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#loginModal">
+                    Login
+                </button>
+                <!--Logout-->
+                <div v-else class="d-flex ">
+                    <a type="button" href="/user" class="btn btn-light border-dark mx-4">{{ myuser.username }}<i class="fas fa-user mx-2"></i></a>
+                    <button  type="button" class="btn btn-warning"  @click="logout()">Logout</button>
+                </div>
+            </div>
+            </div>
+        </nav>
+    <!--End Navbar-->
+    </header>
+    <!--Start main-->
+    <main>
+        <div class="container">
+            <div v-if="myuser.userId != null">
+                <h2 class="text-center">{{ myuser.username }}</h2>
+                <!--Buttons for adding and edit questions-->
+                <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#editProfileModal" @click="showEditModal()">Edit Question</button>
+                <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#addQuestionModal">Add Question</button>
+                <a v-if="myuser.privilegeId == 1" href="/admin"><button class="btn btn-warning">Admin</button></a>
+                <!--Table for displaying questions-->
+                <table class="table table-striped table-bordered mt-3">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Questiontitle</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="question in questions" :key="question.questionId">
+                            <td>{{ question.questionId }}</td>
+                            <td><a :href="'/question/' + question.questionId">{{ question.questionTitle }}</a></td>
+                        </tr>
+                        <tr v-if="questions.length == 0">
+                            <td>#</td>
+                            <td>You have no questions</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div v-else>
+                <h2>404: User not logged in</h2>
+            </div>
+        </div>
+        
+        <!-- Start of add question-->
+        <div class="modal fade" id="addQuestionModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add Question</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="formQuestionTitle" class="form-label">QuestionTitle</label>
+                            <input type="text" class="form-control" id="addQuestionTitle" placeholder="Enter Questiontitle">
+                        </div>
+                        <div class="mb-3">
+                            <label for="fromQuestionText" class="form-label">QuestionText</label>
+                            <textarea class="form-control" id="addQuestionText" rows="9"></textarea>
+                            <select class="form-select" aria-label="Default select example" id="addQuestionCategory">
+                                <option selected>Open this select menu</option>
+                                <option v-for="category in categories" :value="category.categoryId">{{ category.categoryTitle }}</option>
+                                
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" @click="postQuestion()">Add Question</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End of question modal-->
+        <!-- Start of Edit profile-->
+        <div class="modal fade" id="editProfileModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit profile</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="Username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="editUsername" placeholder="Enter New Username">
+                        </div>
+                        <div class="mb-3">
+                            <button class="btn btn-danger" @click="showPasswordBlock()">Edit password</button>
+                        </div>
+                        <div hidden id="editPasswordBlock">
+                            <input id="changePassword" type="checkbox" value="false" hidden>
+                            <div class="mb-3">
+                                <label for="fromQuestionText" class="form-label">New password</label>
+                                <input type="password" class="form-control" id="editPassword1" placeholder="password123...NOT">
+                            </div>
+                            <div class="mb-3">
+                                <label for="fromQuestionText" class="form-label">Confirm password</label>
+                                <input type="password" class="form-control" id="editPassword2" placeholder="qwerty?? Think again...">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" @click="editProfile()">Update</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End of Edit profile-->
+        <!-- Start loginModal -->
+        <div class="modal fade" id="loginModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="staticBackdropLabel">Login</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="formControlInput1" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="loginUsername" placeholder="Please enter valid username">
+                        </div>
+                        <div class="mb-3">
+                            <label for="formControlInput2" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="loginPassword" placeholder="Please enter valid password">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-success" data-bs-dismiss="modal" @click="login()">Login</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End loginModal -->
+    </main>
+    <!--End main-->
+</div>
+</body>
+<script>
+    const v = new Vue({
+        el: '#userProfile',
+        data: {
+            questions: [],
+            categories: [],
+            myuser: {},
+        },
+        methods: {
+            init(){
+                /*
+                    This function runs at the mounting point,
+                    we call this function in mounted, and when we want to update everything
+                */
+
+                // This call gets the user that is logged in right now
+                var self = this;
+                $.ajax({
+                    url: 'api/myuser',
+                    type: 'GET',
+                    xhrFields: {withCredentials: true},
+                    contentType: "application/json; charset=utf-8",
+                    success(res){
+                        if(res.userId){
+                            self.myuser=res;
+                        }
+                        $.getJSON("/api/users/questions/" + self.myuser.userId, function(res) {
+                            if(!res.error){
+                                self.questions = res;
+                            }
+                            else{
+                                alert(res.error);
+                            }
+                        });  
+                    }
+                });
+                
+                // Gets the categories, mainly for the navbar
+                $.getJSON("/api/category", function(res) {
+                    if(!res.error){     
+                    self.categories = res;
+                    }
+                    else{
+                        alert(res.error);
+                    }
+                });  
+            
+            },
+            /*
+                Runs then we login
+            */
+            login(){
+                var self = this;
+                var user = {
+                    username: $('#loginUsername').val(),
+                    password: $('#loginPassword').val()
+                }
+                // Sends the username and password to the backend api
+                $.ajax({
+                    url: 'api/login',
+                    type: 'POST',
+                    data: JSON.stringify(user),
+                    contentType: "application/json; charset=utf-8",
+                    xhrFields: {withCredentials: true},
+                    dataType   : "json",
+                    success(res){
+                        if(!res.error){
+                            self.myuser = res;
+                            self.init();
+                        }  
+                        else{
+                            alert(response.error);
+                        }
+                    },
+                    error(error){
+                        console.log(error);
+                    }
+                })
+            },
+            logout(){
+                var self = this;
+                // Sends a call to clear session data
+                $.ajax({
+                    url: 'api/logout',
+                    type: 'POST',
+                    xhrFields: {withCredentials: true},
+                    success(message){
+                        self.myuser = {};
+                        self.init();
+                    },
+                    error(error){
+                        console.log(error);
+                    }
+                })
+            },
+            //Posting question
+            postQuestion(){
+                const self = this;
+                const question = {
+                    questionTitle: $('#addQuestionTitle').val(),
+                    questionText: $('#addQuestionText').val(),
+                    categoryId: $('#addQuestionCategory').val(),
+                };
+
+                $.ajax({
+                    url: 'api/questions/post',
+                    type: 'POST',
+                    xhrFields: {withCredentials: true},
+                    data: JSON.stringify(question),
+                    contentType: "application/json; charset=utf-8",
+                    success(res){
+                        if(!res.error){
+                            alert(res.message);
+                        }
+                        else{
+                            alert(res.error);
+                        }
+                        $.getJSON("/api/users/questions/" + self.myuser.userId, function(res) {
+                            if(!res.error){
+                                self.questions = res;
+                            }
+                            else{
+                                alert(res.error);
+                            }
+                        });  
+                    }
+                })
+            },
+            showEditModal(){
+                $('#editUsername').val(this.myuser.username);
+            },
+            showPasswordBlock(){
+                const hidden = $('#editPasswordBlock').attr('hidden');
+                var on = false;
+                if(hidden != undefined){
+                    $('#editPasswordBlock').removeAttr('hidden');
+                    on = true;
+                }
+                else{
+                    $('#editPasswordBlock').attr('hidden','true');
+                    on = false;
+                }
+                $('#changePassword').val(on);
+                
+            },
+            editProfile(){
+                const self = this;
+                const user = {
+                    username: $('#editUsername').val(),
+                    password: $('#editPassword1').val(),
+                    changePassword: $('#changePassword').val(),
+                }
+                if(user.changePassword == true){
+                    if($('#editPassword1').val() != $('#editPassword2').val()){
+                        alert('Passwords not matching');
+                        return;
+                    }
+                    if($('#editPassword1').val().length < 6){
+                        alert('Password needs to be atleast 6 in length');
+                        return;
+                    }
+                }
+                // Post the updated user info
+                $.ajax({
+                    url: 'api/users/edit/' + self.myuser.userId,
+                    type: 'PUT',
+                    data: JSON.stringify(user),
+                    xhrFields: {withCredentials: true},
+                    contentType: "application/json; charset=utf-8",
+                    success(res){
+                        if(res.error){
+                            alert(res.error);
+                        }
+                        else{
+                            $.ajax({
+                                url: 'api/myuser',
+                                type: 'GET',
+                                xhrFields: {withCredentials: true},
+                                contentType: "application/json; charset=utf-8",
+                                success(res){
+                                    if(res.userId){
+                                        self.myuser=res;
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        },
+        mounted(){
+            this.init();
+        }
+    });
+</script>
+</html>
